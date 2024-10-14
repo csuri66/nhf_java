@@ -1,5 +1,12 @@
+import javax.swing.*;
+import java.awt.*;
+import java.util.ArrayList;
+
 public class Main {
     public static void main(String[] args) {
-        System.out.println("Hello world!");
+        Frame frame = new Frame();
+        Graphics g2d = frame.getGraphics();
+        frame.Update(g2d);
+
     }
 }
