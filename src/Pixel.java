@@ -1,14 +1,15 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.image.BufferedImage;
 
 public class Pixel {
     private int x;
     private int y;
-    private boolean state;
+    private int state;
     public Pixel(int x, int y) {
         this.x = x;
         this.y = y;
-        state = false;
+        state = 0;
     }
     public int getX() {
         return x;
@@ -16,16 +17,16 @@ public class Pixel {
     public int getY() {
         return y;
     }
-    public boolean getState() {
+    public void setX(int newX) {
+        x=newX;
+    }
+    public void setY(int newY) {
+        y=newY;
+    }
+    public int getState() {
         return state;
     }
-    public void setState(boolean in) {
+    public void setState(int in) {
         state=in;
-    }
-    public void draw(Graphics g) {
-        if(state){
-            Graphics2D g2d = (Graphics2D) g;
-            g2d.drawLine(x,y,x,y);
-        }
     }
 }
