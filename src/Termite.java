@@ -9,23 +9,31 @@ public class Termite {
         this.state = 0;
         this.dir = 0;
         tasks=new ArrayList<>(inputTasks);
-        currentPos=new Pixel(500,400);
+        currentPos=new Pixel(500,250);
     }
     public void restPos(){
-        currentPos=new Pixel(500,400);
+        currentPos=new Pixel(500,250);
     }
     public Pixel getCurrentPos() {
         return currentPos;
     }
     public boolean inBoundary(){
-        if(currentPos.getX()>0&&currentPos.getX()<1000&&currentPos.getY()>0&&currentPos.getY()<500){
+        if(currentPos.getX()>1&&currentPos.getX()<999&&currentPos.getY()>1&&currentPos.getY()<499){
             return true;
         }
         else{
             return false;
         }
     }
-
+    public void setCommands(ArrayList<Command> commands){
+        tasks=new ArrayList<>();
+        for(int i=0;i<commands.size();i++){
+            tasks.add(new Command(commands.get(i)));
+        }
+    }
+    public ArrayList<Command> getCommands(){
+        return tasks;
+    }
     public void executeTasks(PixelDrawer frame){
         for(int i=0;i<tasks.size();i++){
             if(tasks.get(i).getState()==state){

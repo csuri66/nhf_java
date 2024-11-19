@@ -1,4 +1,6 @@
-public class Command {
+import java.io.Serializable;
+
+public class Command implements Serializable {
     private int state;
     private int currentCell;
     private String dir;
@@ -11,8 +13,19 @@ public class Command {
         this.draw = draw;
         this.nextState = nextState;
     }
+    public Command(Command copy){
+        this.state = copy.state;
+        this.currentCell = copy.currentCell;
+        this.dir = copy.dir;
+        this.draw = copy.draw;
+        this.nextState = copy.nextState;
+    }
+
     public int getState() {
         return state;
+    }
+    public String toString(){
+        return "("+state+"-"+currentCell+"-"+dir+"-"+draw+"-"+nextState+")";
     }
     public int getCurrentCell() {
         return currentCell;
