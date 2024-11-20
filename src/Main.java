@@ -20,12 +20,23 @@ public class Main {
         JButton Start = new JButton("Start");
         JButton Stop = new JButton("Stop");
         JButton Back = new JButton("Back");
+        JButton Back2 = new JButton("Back");
         JButton Clear = new JButton("Clear");
         JButton Restart = new JButton("Restart");
         JButton ruleSetLoader = new JButton("Load / Save ruleset");
         JButton ruleSetInput = new JButton("Ruleset maker");
         Icon imgIcon = new ImageIcon("xd.gif");
         JLabel label = new JLabel(imgIcon);
+
+        JButton inputCommand=new JButton("Hozzáad");
+        JButton inputCommandDelete=new JButton("Törlés");
+        JTextField inputText=new JTextField();
+        JPanel inputPanel=new JPanel();
+
+        inputText.setPreferredSize(new Dimension(150, 30));
+        inputPanel.add(inputText);
+        inputPanel.add(inputCommand);
+        inputPanel.add(inputCommandDelete);
 
         Start.setPreferredSize(new Dimension(150, 50));
         ruleSetLoader.setPreferredSize(new Dimension(150, 50));
@@ -34,6 +45,14 @@ public class Main {
         Clear.setPreferredSize(new Dimension(150, 50));
         Back.setPreferredSize(new Dimension(150, 50));
         label.setBounds(300, 250, 46, 14);
+
+        JButton saverCommand=new JButton("Elment");
+        JButton loaderCommand=new JButton("Betölt");
+        JPanel loaderPanel=new JPanel();
+
+        loaderPanel.add(loaderCommand);
+        loaderPanel.add(saverCommand);
+
 
         menuPanel.add(Start);
         menuPanel.add(ruleSetLoader);
@@ -54,6 +73,8 @@ public class Main {
         cardPanel.add(Drawer,"canvas");
         cardPanel.add(menuPanel,"menu");
         cardPanel.add(drawPanel,"draw");
+        cardPanel.add(inputPanel,"input");
+        cardPanel.add(loaderPanel,"loader");
         CardLayout c1 = (CardLayout) cardPanel.getLayout();
         frame.add(cardPanel);
         frame.setVisible(true);
@@ -128,29 +149,29 @@ public class Main {
             Stop.setEnabled(false);
         });
         Back.addActionListener(e -> {
-            isDrawing = false;
-            if (drawingThread!= null && drawingThread.isAlive()) {
-                drawingThread.interrupt();
-                drawingTimer.stop();
+            if(isDrawing){
+                isDrawing = false;
+                if (drawingThread!= null && drawingThread.isAlive()) {
+                    drawingThread.interrupt();
+                    drawingTimer.stop();
+                }
+            }
+            c1.show(cardPanel,"menu");
+        });
+        Back2.addActionListener(e -> {
+            if(isDrawing){
+                isDrawing = false;
+                if (drawingThread!= null && drawingThread.isAlive()) {
+                    drawingThread.interrupt();
+                    drawingTimer.stop();
+                }
             }
             c1.show(cardPanel,"menu");
         });
 
         ruleSetInput.addActionListener(e -> {
-
-            JButton inputCommand=new JButton("Hozzáad");
-            JButton inputCommandDelete=new JButton("Törlés");
-            JFrame inputFrame=new JFrame("Ruleset Maker");
-            JTextField inputText=new JTextField();
-            JPanel inputPanel=new JPanel();
-
-            inputText.setPreferredSize(new Dimension(150, 30));
-
-            inputPanel.add(inputText);
-            inputPanel.add(inputCommand);
-            inputPanel.add(inputCommandDelete);
-
-            inputFrame.add(inputPanel);
+            inputPanel.add(Back2);
+            c1.show(cardPanel,"input");
 
             inputCommand.addActionListener(f -> {
                 String command = inputText.getText();
@@ -165,9 +186,6 @@ public class Main {
                 }
             });
 
-            inputFrame.setSize(300,200);
-            inputFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-            inputFrame.setVisible(true);
 
         });
 
@@ -180,55 +198,48 @@ public class Main {
             Clear.setEnabled(false);
         });
 
-        ruleSetLoader.addActionListener(e -> {
-            JButton inputCommand=new JButton("Elment");
-            JButton inputCommandDelete=new JButton("Betölt");
-            JFrame inputFrame=new JFrame("Ruleset Loader");
-            JTextField inputText=new JTextField();
-            JPanel inputPanel=new JPanel();
+       ruleSetLoader.addActionListener(e -> {
+           loaderPanel.add(Back2);
+            c1.show(cardPanel,"loader");
 
-            inputText.setPreferredSize(new Dimension(150, 30));
+            saverCommand.addActionListener(f -> {
+                JFileChooser fileChooser= new JFileChooser();
+                int response = fileChooser.showSaveDialog(null);
+                if(response==JFileChooser.APPROVE_OPTION){
+                    File file= new File (fileChooser.getSelectedFile().getAbsolutePath());
+                    try (FileOutputStream fileOut = new FileOutputStream(file);
+                         ObjectOutputStream objectOut = new ObjectOutputStream(fileOut)) {
 
-            inputPanel.add(inputText);
-            inputPanel.add(inputCommand);
-            inputPanel.add(inputCommandDelete);
+                        if(termite.getCommands().size()>0){
+                            objectOut.writeObject(termite.getCommands());
+                        }
 
-            inputFrame.add(inputPanel);
-
-            inputCommand.addActionListener(f -> {
-                String command = inputText.getText();
-                if(command.length()==0){
-                    command= String.valueOf(System.nanoTime()%100);
-                }
-                try (FileOutputStream fileOut = new FileOutputStream(command+".txt");
-                     ObjectOutputStream objectOut = new ObjectOutputStream(fileOut)) {
-
-                    if(termite.getCommands().size()>0){
-                        objectOut.writeObject(termite.getCommands());
+                    } catch (IOException h) {
+                        h.printStackTrace();
                     }
-
-                } catch (IOException h) {
-                    h.printStackTrace();
                 }
+
             });
 
-            inputCommandDelete.addActionListener(f -> {
-                String command = inputText.getText();
-                try (FileInputStream fileIn = new FileInputStream(command+".txt");
-                     ObjectInputStream objectIn = new ObjectInputStream(fileIn)) {
+            loaderCommand.addActionListener(f -> {
+                JFileChooser fileChooser= new JFileChooser();
+                int response = fileChooser.showOpenDialog(null);
+                if(response==JFileChooser.APPROVE_OPTION){
+                    File file=new File (fileChooser.getSelectedFile().getAbsolutePath());
+                    try (FileInputStream fileIn = new FileInputStream(file);
+                         ObjectInputStream objectIn = new ObjectInputStream(fileIn)) {
 
-                    ArrayList<Command> temp = (ArrayList<Command>) objectIn.readObject();
-                    termite.setCommands(new ArrayList<>(temp));
+                        ArrayList<Command> temp = (ArrayList<Command>) objectIn.readObject();
+                        termite.setCommands(new ArrayList<>(temp));
 
-                } catch (IOException | ClassNotFoundException h) {
-                    h.printStackTrace();
+                    } catch (IOException | ClassNotFoundException h) {
+                        h.printStackTrace();
+                    }
                 }
+
             });
 
-            inputFrame.setSize(300,200);
-            inputFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-            inputFrame.setVisible(true);
-        });
+       });
 
     }
 }
