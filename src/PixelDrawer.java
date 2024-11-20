@@ -20,6 +20,9 @@ public class PixelDrawer extends JPanel {
             }
         }
     }
+    public BufferedImage getImage() {
+        return image;
+    }
     public ArrayList<ArrayList<Pixel>> getPixelList(){
         return pixelList;
     }

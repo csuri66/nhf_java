@@ -11,11 +11,17 @@ public class Main {
     public static void main(String[] args) throws InterruptedException {
 
         JFrame frame = new JFrame("Termite");
-        JPanel panel = new JPanel();
+        JPanel cardPanel = new JPanel(new CardLayout());
+        JPanel menuPanel = new JPanel();
+        JPanel drawPanel = new JPanel();
+        frame.setSize(1000, 700);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         JButton Start = new JButton("Start");
         JButton Stop = new JButton("Stop");
+        JButton Back = new JButton("Back");
         JButton Clear = new JButton("Clear");
+        JButton Restart = new JButton("Restart");
         JButton ruleSetLoader = new JButton("Load / Save ruleset");
         JButton ruleSetInput = new JButton("Ruleset maker");
         Icon imgIcon = new ImageIcon("xd.gif");
@@ -24,64 +30,93 @@ public class Main {
         Start.setPreferredSize(new Dimension(150, 50));
         ruleSetLoader.setPreferredSize(new Dimension(150, 50));
         ruleSetInput.setPreferredSize(new Dimension(150, 50));
-        Stop.setPreferredSize(new Dimension(150, 50));
+        //Stop.setPreferredSize(new Dimension(150, 50));
         Clear.setPreferredSize(new Dimension(150, 50));
+        Back.setPreferredSize(new Dimension(150, 50));
         label.setBounds(300, 250, 46, 14);
 
-        panel.add(Start);
-        panel.add(Stop);
-        panel.add(Clear);
-        panel.add(ruleSetLoader);
-        panel.add(ruleSetInput);
-        panel.add(label);
-
-        frame.add(panel, BorderLayout.SOUTH);
+        menuPanel.add(Start);
+        menuPanel.add(ruleSetLoader);
+        menuPanel.add(ruleSetInput);
+        menuPanel.add(label);
+        Restart.setBounds(50,550,200,50);
+        Stop.setBounds(275,550,200,50);
+        Clear.setBounds(500,550,200,50);
+        Back.setBounds(725,550,200,50);
 
         PixelDrawer Drawer = new PixelDrawer();
-        frame.add(Drawer,BorderLayout.CENTER);
+        Drawer.setLayout(null);
+        Drawer.add(Restart);
+        Drawer.add(Stop);
+        Drawer.add(Clear);
+        Drawer.add(Back);
 
-
-        frame.setSize(1000, 700);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        cardPanel.add(Drawer,"canvas");
+        cardPanel.add(menuPanel,"menu");
+        cardPanel.add(drawPanel,"draw");
+        CardLayout c1 = (CardLayout) cardPanel.getLayout();
+        frame.add(cardPanel);
         frame.setVisible(true);
-
+        c1.show(cardPanel,"menu");
         ArrayList<Command> commands= new ArrayList<>();
         Termite termite=new Termite(commands);
 
-        Clear.setEnabled(false);
-        Stop.setEnabled(false);
 
         Start.addActionListener(e -> {
             isDrawing=true;
-            Start.setEnabled(false);
+            c1.show(cardPanel,"canvas");
             Stop.setEnabled(true);
             Clear.setEnabled(false);
 
-
             drawingThread = new Thread(() -> {
-                for(int i = 0; i< commands.size(); ++i){
-                    System.out.println(commands.get(i).toString());
-                }
-                drawingTimer = new Timer(32,f->Drawer.update(Drawer.getGraphics()));
+
+                drawingTimer = new Timer(8,f-> Drawer.repaint());
                 drawingTimer.start();
-                int delay=0;
+                int flickerDelay=0;
                 while(isDrawing&&termite.inBoundary()) {
-                    if(delay==1000){
+                    if(flickerDelay==1000){
                         termite.executeTasks(Drawer);
-                        delay=0;
+                        flickerDelay=0;
                     }
-                    ++delay;
+                    ++flickerDelay;
                 }
                 if(!termite.inBoundary()){
                     Stop.setEnabled(false);
                     Clear.setEnabled(true);
                     drawingTimer.stop();
                 }
-                SwingUtilities.invokeLater(() -> Start.setEnabled(true));
             });
             drawingThread.start();
         });
+        Restart.addActionListener(e -> {
+            isDrawing=true;
+            c1.show(cardPanel,"canvas");
+            Stop.setEnabled(true);
+            Clear.setEnabled(false);
+            drawingTimer.stop();
+            Drawer.resetImage();
+            termite.restPos();
+            Drawer.update(Drawer.getGraphics());
+            drawingThread = new Thread(() -> {
 
+                drawingTimer = new Timer(8,f-> Drawer.repaint());
+                drawingTimer.start();
+                int flickerDelay=0;
+                while(isDrawing&&termite.inBoundary()) {
+                    if(flickerDelay==1000){
+                        termite.executeTasks(Drawer);
+                        flickerDelay=0;
+                    }
+                    ++flickerDelay;
+                }
+                if(!termite.inBoundary()){
+                    Stop.setEnabled(false);
+                    Clear.setEnabled(true);
+                    drawingTimer.stop();
+                }
+            });
+            drawingThread.start();
+        });
         Stop.addActionListener(e -> {
             isDrawing = false;
             if (drawingThread!= null && drawingThread.isAlive()) {
@@ -91,6 +126,14 @@ public class Main {
             Start.setEnabled(true);
             Clear.setEnabled(true);
             Stop.setEnabled(false);
+        });
+        Back.addActionListener(e -> {
+            isDrawing = false;
+            if (drawingThread!= null && drawingThread.isAlive()) {
+                drawingThread.interrupt();
+                drawingTimer.stop();
+            }
+            c1.show(cardPanel,"menu");
         });
 
         ruleSetInput.addActionListener(e -> {
