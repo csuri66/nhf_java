@@ -1,11 +1,11 @@
 import java.io.Serializable;
 
 public class Command implements Serializable {
-    private int state;
-    private int currentCell;
-    private String dir;
-    private int draw;
-    private int nextState;
+    private final int state;
+    private final int currentCell;
+    private final String dir;
+    private final int draw;
+    private final int nextState;
     public Command(int state, int currentCell, String dir, int draw, int nextState) {
         this.state = state;
         this.currentCell = currentCell;

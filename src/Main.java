@@ -2,38 +2,54 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.*;
 import java.util.ArrayList;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class Main {
+
+    // Külön thread vézgi a rajzolást, ezekhez szukséges változók
     static volatile boolean isDrawing = false;
     private static Thread drawingThread;
     private static Timer drawingTimer;
+
     public static void main(String[] args) throws InterruptedException {
 
+        //Menü blokk, a menü CardLayout-al van megoldva, ahová paneleket rakok majd azokat előveszem
         JFrame frame = new JFrame("Termite");
-        JPanel cardPanel = new JPanel(new CardLayout());
-        JPanel menuPanel = new JPanel();
-        JPanel drawPanel = new JPanel();
         frame.setSize(1000, 700);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
+        JPanel cardPanel = new JPanel(new CardLayout());
+
+        JPanel menuPanel = new JPanel();
+        JPanel inputPanel=new JPanel();
+        JPanel loaderPanel=new JPanel();
+        PixelDrawer Drawer = new PixelDrawer(); // Ez egy JPanel-t extendelő class
+
+        cardPanel.add(Drawer,"canvas");
+        cardPanel.add(menuPanel,"menu");
+        cardPanel.add(inputPanel,"input");
+        cardPanel.add(loaderPanel,"loader");
+
+        //gombok a panelekre
         JButton Start = new JButton("Start");
         JButton Stop = new JButton("Stop");
-        JButton Back = new JButton("Back");
-        JButton Back2 = new JButton("Back");
+        JButton BackAbsolute = new JButton("Back");
+        JButton BackNormal = new JButton("Back");
         JButton Clear = new JButton("Clear");
         JButton Restart = new JButton("Restart");
         JButton ruleSetLoader = new JButton("Load / Save ruleset");
         JButton ruleSetInput = new JButton("Ruleset maker");
-        Icon imgIcon = new ImageIcon("xd.gif");
-        JLabel label = new JLabel(imgIcon);
-
         JButton inputCommand=new JButton("Hozzáad");
         JButton inputCommandDelete=new JButton("Törlés");
-        JTextField inputText=new JTextField();
-        JPanel inputPanel=new JPanel();
+        JButton saverCommand=new JButton("Elment");
+        JButton loaderCommand=new JButton("Betölt");
 
+        Icon imgIcon = new ImageIcon("xd.gif"); //vicces gif
+        JLabel label = new JLabel(imgIcon);
+
+
+        JTextField inputText=new JTextField();
         inputText.setPreferredSize(new Dimension(150, 30));
+
         inputPanel.add(inputText);
         inputPanel.add(inputCommand);
         inputPanel.add(inputCommandDelete);
@@ -41,47 +57,40 @@ public class Main {
         Start.setPreferredSize(new Dimension(150, 50));
         ruleSetLoader.setPreferredSize(new Dimension(150, 50));
         ruleSetInput.setPreferredSize(new Dimension(150, 50));
-        //Stop.setPreferredSize(new Dimension(150, 50));
-        Clear.setPreferredSize(new Dimension(150, 50));
-        Back.setPreferredSize(new Dimension(150, 50));
-        label.setBounds(300, 250, 46, 14);
-
-        JButton saverCommand=new JButton("Elment");
-        JButton loaderCommand=new JButton("Betölt");
-        JPanel loaderPanel=new JPanel();
-
-        loaderPanel.add(loaderCommand);
-        loaderPanel.add(saverCommand);
-
 
         menuPanel.add(Start);
         menuPanel.add(ruleSetLoader);
         menuPanel.add(ruleSetInput);
         menuPanel.add(label);
+
+        loaderPanel.add(loaderCommand);
+        loaderPanel.add(saverCommand);
+
+        //A bufferedimage nem akar viselkedni JPanel-be rakva, így  a gombok abszolut pozicionálása a legértelemsebb megoldás
         Restart.setBounds(50,550,200,50);
         Stop.setBounds(275,550,200,50);
         Clear.setBounds(500,550,200,50);
-        Back.setBounds(725,550,200,50);
+        BackAbsolute.setBounds(725,550,200,50);
 
-        PixelDrawer Drawer = new PixelDrawer();
         Drawer.setLayout(null);
         Drawer.add(Restart);
         Drawer.add(Stop);
         Drawer.add(Clear);
-        Drawer.add(Back);
+        Drawer.add(BackAbsolute);
 
-        cardPanel.add(Drawer,"canvas");
-        cardPanel.add(menuPanel,"menu");
-        cardPanel.add(drawPanel,"draw");
-        cardPanel.add(inputPanel,"input");
-        cardPanel.add(loaderPanel,"loader");
+
         CardLayout c1 = (CardLayout) cardPanel.getLayout();
         frame.add(cardPanel);
+
         frame.setVisible(true);
+
         c1.show(cardPanel,"menu");
+
+
         ArrayList<Command> commands= new ArrayList<>();
         Termite termite=new Termite(commands);
 
+        //Gombokhoz a műveleteik
 
         Start.addActionListener(e -> {
             isDrawing=true;
@@ -91,11 +100,11 @@ public class Main {
 
             drawingThread = new Thread(() -> {
 
-                drawingTimer = new Timer(8,f-> Drawer.repaint());
+                drawingTimer = new Timer(8,f-> Drawer.repaint()); //~120 fps
                 drawingTimer.start();
                 int flickerDelay=0;
                 while(isDrawing&&termite.inBoundary()) {
-                    if(flickerDelay==1000){
+                    if(flickerDelay==1000){ //Java grafikát elátkozom, de ezzel legalább nem ronda
                         termite.executeTasks(Drawer);
                         flickerDelay=0;
                     }
@@ -148,7 +157,7 @@ public class Main {
             Clear.setEnabled(true);
             Stop.setEnabled(false);
         });
-        Back.addActionListener(e -> {
+        BackAbsolute.addActionListener(e -> {
             if(isDrawing){
                 isDrawing = false;
                 if (drawingThread!= null && drawingThread.isAlive()) {
@@ -158,7 +167,7 @@ public class Main {
             }
             c1.show(cardPanel,"menu");
         });
-        Back2.addActionListener(e -> {
+        BackNormal.addActionListener(e -> {
             if(isDrawing){
                 isDrawing = false;
                 if (drawingThread!= null && drawingThread.isAlive()) {
@@ -168,27 +177,25 @@ public class Main {
             }
             c1.show(cardPanel,"menu");
         });
-
         ruleSetInput.addActionListener(e -> {
-            inputPanel.add(Back2);
+            inputPanel.add(BackNormal);
             c1.show(cardPanel,"input");
 
             inputCommand.addActionListener(f -> {
                 String command = inputText.getText();
-                String[] asd= command.split("-");
-                if(asd.length==5)
-                    termite.getCommands().add(new Command(Integer.parseInt(asd[0]),Integer.parseInt(asd[1]),asd[2],Integer.parseInt(asd[3]),Integer.parseInt(asd[4])));
+                String[] userInput= command.split("-");
+                if(userInput.length==5)
+                    termite.getCommands().add(new Command(Integer.parseInt(userInput[0]),Integer.parseInt(userInput[1]),userInput[2],Integer.parseInt(userInput[3]),Integer.parseInt(userInput[4])));
             });
 
             inputCommandDelete.addActionListener(f -> {
-                if(termite.getCommands().size()>0){
-                    termite.getCommands().remove(termite.getCommands().size()-1);
+                if(!termite.getCommands().isEmpty()){
+                    termite.getCommands().removeLast();
                 }
             });
 
 
         });
-
         Clear.addActionListener(e -> {
             drawingTimer.stop();
             Drawer.resetImage();
@@ -197,9 +204,8 @@ public class Main {
             Stop.setEnabled(false);
             Clear.setEnabled(false);
         });
-
-       ruleSetLoader.addActionListener(e -> {
-           loaderPanel.add(Back2);
+        ruleSetLoader.addActionListener(e -> {
+            loaderPanel.add(BackNormal);
             c1.show(cardPanel,"loader");
 
             saverCommand.addActionListener(f -> {
@@ -210,7 +216,7 @@ public class Main {
                     try (FileOutputStream fileOut = new FileOutputStream(file);
                          ObjectOutputStream objectOut = new ObjectOutputStream(fileOut)) {
 
-                        if(termite.getCommands().size()>0){
+                        if(!termite.getCommands().isEmpty()){
                             objectOut.writeObject(termite.getCommands());
                         }
 
