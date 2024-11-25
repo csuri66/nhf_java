@@ -5,7 +5,7 @@ import java.util.ArrayList;
 
 public class Main {
 
-    // Külön thread vézgi a rajzolást, ezekhez szukséges változók
+    // Külön thread vézgi a rajzolást, ezekhez szükséges változók
     static volatile boolean isDrawing = false;
     private static Thread drawingThread;
     private static Timer drawingTimer;
@@ -38,10 +38,10 @@ public class Main {
         JButton Restart = new JButton("Restart");
         JButton ruleSetLoader = new JButton("Load / Save ruleset");
         JButton ruleSetInput = new JButton("Ruleset maker");
-        JButton inputCommand=new JButton("Hozzáad");
-        JButton inputCommandDelete=new JButton("Törlés");
-        JButton saverCommand=new JButton("Elment");
-        JButton loaderCommand=new JButton("Betölt");
+        JButton inputCommand=new JButton("Add");
+        JButton inputCommandDelete=new JButton("Delete");
+        JButton saverCommand=new JButton("Save");
+        JButton loaderCommand=new JButton("Load");
 
         Icon imgIcon = new ImageIcon("xd.gif"); //vicces gif
         JLabel label = new JLabel(imgIcon);
@@ -178,13 +178,13 @@ public class Main {
             c1.show(cardPanel,"menu");
         });
         ruleSetInput.addActionListener(e -> {
-            inputPanel.add(BackNormal);
+            inputPanel.add(BackNormal); // ezt a backet oda vissza adjuk a paneleknek kivéve a startnak, igy nem kell többet csinálni belőle
             c1.show(cardPanel,"input");
 
             inputCommand.addActionListener(f -> {
                 String command = inputText.getText();
                 String[] userInput= command.split("-");
-                if(userInput.length==5)
+                if(userInput.length==5) //  Nem kell több szűrés mivel az executeTasks amúgy sem fog lefuttatni rossz taskot
                     termite.getCommands().add(new Command(Integer.parseInt(userInput[0]),Integer.parseInt(userInput[1]),userInput[2],Integer.parseInt(userInput[3]),Integer.parseInt(userInput[4])));
             });
 
